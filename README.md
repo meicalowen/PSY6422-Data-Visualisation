@@ -10,5 +10,5 @@ The repo includes:
 * raw_data - pitchfork raw data used for the visualisation project
 * index.Rmd - full Rmarkdown file
 * index.html - full Rmarkdown file knitted to html
-* 
+
 View the full repo: https://github.com/meicalowen/PSY6422-Data-Visualisation
