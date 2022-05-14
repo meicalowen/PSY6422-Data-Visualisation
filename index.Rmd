@@ -1,0 +1,360 @@
+---
+title: "A History of Pitchfork Reviews"
+author: '210155327'
+date: "14/05/2022"
+output: html_document
+---
+
+``` {r, echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%"}
+library(here)
+#set path for pitchfork logo
+PitchforkLogo <- here("images", "image1_pitchfork.jpg")
+
+#attach the logo
+knitr::include_graphics(PitchforkLogo)
+```
+
+# Project Overview 
+
+Founded as an **independent music blog** in 1995, <span style="color: red;">Pitchfork</span> has since gone on to become one of most influential publishers in the music industry, reviewing **tens of thousands** of albums throughout the past **25 years.** While you can now rely on them to consistently review every new release using their infamously specific 0.0 - 10 [scoring system](https://pitchfork.com/features/lists-and-guides/25-years-of-pitchfork-reviews-by-the-numbers/), it wasn't too long ago that <span style="color: red;">Pitchfork</span> were scrutinised for being nothing more than a pretentious independent-rock publisher created by ["middle class white guys in their 20s and 30s"](https://pitchfork.com/features/lists-and-guides/the-history-of-the-pitchfork-reviews-section-in-38-important-reviews/).  
+
+As <span style="color: red;">Pitchfork</span> has grown in stature, their [masthead](https://pitchfork.com/masthead/) has diversified, ultimately allowing them to branch out and provide in-depth reviews of albums from a wide range of genres. The **aim** of this project is to explore their vast plethora of reviews, while attempting to identify possible **trends/biases** across certain genres.
+
+```{r, echo = FALSE, out.width = "100%", fig.cap = "Image showing Pitchfork scrutiny - Credit:Crash Thompson"}
+#set path for Pitchfork controversy image
+PitchforkControversy <- here("images", "image2_pitchfork.jpg")
+#Attach the image below
+knitr::include_graphics(PitchforkControversy)
+```
+***
+
+## Research Questions
+
+Considering how much <span style="color: red;">Pitchfork</span> has evolved as a publisher over the past 25 years, I was interested to see how their approach to certain genres had altered throughout this period. This project has **2** main research questions:
+
+1. Given their roots as an indie-rock publisher, does <span style="color: red;">Pitchfork</span> hold a bias towards **Rock** music?
+
+2. With **Hip-Hop's** emphatic rise to the mainstream over the past decade, has this increased popularity caused caused a decline in the number of **Rock** reviews?
+
+***
+
+## Dataset
+The source of the data used in this project was taken from a **Reddit** User, under the name [u/snappcrack](https://components.one/datasets/pitchfork-reviews-dataset). This data is a revised version of an original  data set published to [Kaggle](https://www.kaggle.com/datasets/nolanbconaway/pitchfork-data) by Nolan Conway in 2017. The updated version contains 2 extra years worth of data, resulting in a data set containing **every** published <span style="color: red;">Pitchfork</span> album review between **January 1999 - January 2019**. The full data set contains **20,873 data entries**.  
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+#Import the raw data
+pitchforkdata <- read.csv(here("raw_data", "pitchfork.csv"))
+#Select only the columns which are relevant for the current project
+pitchforkdata <- pitchforkdata %>%
+  select(artist, album, genre, score, date, author, role, bnm, label, release_year)
+#Let's take a look at the first 6 rows of data
+```
+
+```{r, echo = FALSE, results='asis'}
+library(knitr)
+kable(pitchforkdata[1:6, ], caption = "Pitchfork Data relevant to Project")
+```
+
+***
+
+## Codebook
+The table below provides a description of each of the variables included in the data set:
+
+**Variable**    | **Description**
+:-------------: | :---------------:
+artist          | The artist who released the album
+album           | The name of the album
+genre           |  The genre of which the album belongs
+date            | The date the album review was published
+author          | The name of the person who wrote the review
+role            | The author's role at <span style="color: red;">Pitchfork</span>
+bnm             | 0 = Album not included in **Best New Music**, 1 = Album included in **Best New Music** 
+label           | The record label the album was released under
+release_year    | The year the album was released
+
+***
+
+## Visualisation 1 - Average <span style="color: red;">Pitchfork</span> Score per Genre
+
+The first visualisation will aim to explore claims that Pitchfork hold a bias towards particular genres, namely **Rock**. In order assess these claims I will be creating a BoxPlot which reveals a direct comparison of the median scores awarded to 8 main genres between 1999 and 2018.  
+
+### Data Cleaning for Visualisation 1
+```{r}
+#Sort the original dataset so it only includes the genre and score of each album
+pg1 <- pitchforkdata %>%
+  select(genre, score) %>% 
+
+#Filter the data so it only contains the 'main' genres
+filter(genre == "Electronic" | genre == "Experimental" | genre == "Folk/Country" | genre == "Jazz" | genre == "Metal" | genre == "Pop/R&B" | genre == "Rap" | genre == "Rock")
+
+# Transfer this new data into a data set so it can be plotted onto a graph
+pg1 <- as.data.frame(pg1)
+# Observe the first 5 rows of data to see if the data is as expected
+head(pg1, 5)
+```
+
+
+### Plot 1 - Boxplot showing the median scores per Genre between 1999-2018  
+```{r, warning=FALSE, message=FALSE}
+
+#Load ggplot2
+library(ggplot2)
+#Plot the BoxPlot
+pg1 <-  pg1 %>% 
+#Reorder the data so the averages are plotted from highest a to lowest
+ggplot(aes(x = reorder(genre, score, na.rm = TRUE), y = score, fill = genre)) +
+  geom_boxplot(
+    alpha = 0.8,
+    outlier.alpha = 0.1,
+#Set the variable width to differentiate between the number of reviews each genre has had 
+    varwidth = TRUE) +
+#Add labels to the graph
+  labs(x = "Genre",
+    y = "Album Score",
+    title = "Average Pitchfork Score Per Genre",
+    subtitle = "Median of Pitchfork scores given for albums from each genre",
+    caption = "Source:Kaggle.com") +
+#Flip the axis so that the genre names can be read more clearly
+  coord_flip() +
+  scale_y_continuous(limits=c(0,10), breaks = seq(0,10, by=2)) +
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(face = "italic"),
+        legend.position = "none")
+
+#Save this graph 
+ggsave(here("figures", "fig01_boxplot-mean-scores.png"))
+
+#Display the graph below
+print(pg1)
+
+```
+
+### Summary of Visualisation 1
+
+Despite the general consensus, this boxplot suggests that <span style="color: red;">Pitchfork</span> doesn't hold a  bias towards **Rock** music, who's average score is only higher than those of **Pop/R&B** and **Hip-Hop**. With all 8 main genres sitting around a median score of **7**, this BoxPlot reveals that <span style="color: red;">Pitchfork</span> are consistent with their approach to reviewing albums from each genre, and therefore are unbiased towards **Rock**.
+
+***
+
+## Visualisation 2 - Number of 10s given per Genre
+
+Although **Visualisation 1** showed no form of bias while looking at average scores across genres, I sought to further explore these claims using an alternative approach. Although it's an **extremely** rare occurrence, <span style="color: red;">Pitchfork</span> are occasionally prone to handing out a perfect 10 score. Although this has only occurred **129 times** as per [April 2020](https://www.distractify.com/p/pitchfork-10-albums), I wanted to observe whether there is a disparity between the number of 10s distributed across genres. In order to make this data as effective as possible, **Visualisation 2** included **sub-genres** by assigning them to their parent genre, thus allowing for a more representative overview of the data.
+
+### Data Cleaning for Visualisation 2
+```{r}
+#Filter the data so it only shows albums given a score of 10
+pg2 <- pitchforkdata %>% 
+  filter(score == 10) %>% 
+#Select the genre and score column - which is what we're interested in
+  select(genre, score)
+#Sort the data so the subgenres all come under their respective main genre
+Rock_Tens <- sum(pg2$genre == "Rock" | pg2$genre == "Rock,Electronic")
+Hip_Hop_Tens <- sum(pg2$genre == "Rap" | pg2$genre == "Rap,Rock")
+Experimental_Tens <- sum(pg2$genre == "Experimental" | pg2$genre == "Experimental,Rock")
+Pop_Rnb_Tens <- sum(pg2$genre == "Pop/R&B,Rock" | pg2$genre == "Pop/R&B")
+Electronic_Tens <- sum(pg2$genre == "Electronic" | pg2$genre == "Electronic,Pop/R&B")
+Jazz_Tens <- sum(pg2$genre == "Jazz" | pg2$genre == "Jazz,Pop/R&B")
+Metal_Tens <- sum(pg2$genre == "Metal")
+Folk_Country_Tens <- sum(pg2$genre == "Folk/Country")
+## Place this data in a new data frame where the subgenres come under the main genre
+Genre <-  c("Rock", "HipHop", "Experimental", "PopRnB", "Jazz", "Electronic", "Metal", "FolkCountry")
+NumberofTens <-  c(Rock_Tens, Hip_Hop_Tens, Experimental_Tens, Pop_Rnb_Tens, Electronic_Tens, Jazz_Tens, Metal_Tens, Folk_Country_Tens)
+pg2 <- data.frame(Genre, NumberofTens)
+## View the last 3 rows of data
+tail(pg2, 3)
+```
+
+### Plot 2 - Lollipop Graph showing the number of 10s scored by each Genre
+```{r}
+pg2 <- pg2 %>%
+#Reorder the data so it appears in descending order
+  ggplot(aes(x = reorder(Genre, NumberofTens), y = NumberofTens)) +
+  geom_segment(aes(xend = Genre, y = 0, yend = NumberofTens), lwd = 1) +
+  geom_point(size = 4, color = "forestgreen", fill=alpha("yellowgreen", 0.3), alpha=0.7, shape=21, stroke=1.5) +
+  theme_minimal() +
+#Flip the axes of the graph so it is easier to read
+  coord_flip() +
+  labs(x = "Genre",
+          y = "Total Scores of 10",
+          title = "Albums given a Perfect 10",
+          subtitle = "Number of perfect 10 scores Pitchfork have awarded to albums from each genre",
+          caption = "Source:Kaggle.com") +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(face = "italic"),
+        legend.position = "none")
+#Save this graph
+ggsave(here("figures", "fig02_lollipop-10-scores.png"))
+#Plot the graph below
+print(pg2)
+```
+
+### Summary of Visualisation 2
+
+Where **Visualisation 1** showed there was no bias across genre average scores, the Lollipop Graph in **Visualisation 2** shows great disparities between Perfect 10 scores given to **Rock** albums in comparison with albums from all other genres. While these findings may potentially be skewed by the fact that <span style="color: red;">Pitchfork</span> has reviewed more **Rock** albums than any other genre, the sheer contrast with **all** other genres suggests <span style="color: red;">Pitchfork</span> writers certainly appear much more likely to give an album a Perfect 10 Score if it belongs to the **Rock** genre.  
+
+***
+
+## Visualisation 3 - The Rise of Hip-Hop
+
+Since the beginning of the 21st century, **Hip-Hop** has grown to become a mainstream genre, and has recently become the [most streamed genre on Spotify](https://909originals.com/2021/08/17/hip-hop-the-top-genre-on-spotify-while-radio-continues-to-go-pop-study-finds/#:~:text=Streaming-,Hip%20hop%20the%20top%20genre%20on%20Spotify%2C%20while%20radio%20continues,go%20'pop'%2C%20study%20finds&text=Hip%20hop%20is%20the%20most,study%20by%20Viberate%20has%20found). Given how <span style="color: red;">Pitchfork</span> started out primarily as an **Indie-Rock** publication, I wanted to see whether the rise of **Hip-Hop** could be seen through an Area Chart containing a yearly overview of the number of <span style="color: red;">Pitchfork</span> **Hip-Hop** reviews.
+
+### Data Cleaning for Visualisations 3 & 4
+
+In order to assess the evolution of <span style="color: red;">Pitchfork</span> **Hip-Hop** reviews, I was required to create a new dataframe which accounted for reviews coming under the many of its subgenres. Although this required a lengthy code, it provided a more representative figure.
+
+```{r, warning = FALSE, message = FALSE}
+#Load in the original data once again
+pitchforkdata <- read.csv(here("raw_data", "pitchfork.csv"))
+#using lubridate package - sort the data into the following y-m-d
+library(lubridate)
+Review_Year <- mdy(pitchforkdata$date)
+#Convert character data to 'Date'
+Review_Year <- format(as.Date(Review_Year, format = "%Y/%m/%d"),"%Y")
+#Add this new column to the original data set
+pitchforkdata$Review_Year <- Review_Year
+#Create a new vector for each year
+Review_Year <- c("2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018")
+#Create a vector containing the sum of all Hip-Hop reviews for each year
+HipHop <- c(sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2002"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2003"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2004"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2005"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2006"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2007"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2008"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2009"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2010"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2011"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2012"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2013"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2014"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2015"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2016"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2017"),
+            sum(grepl('Rap', pitchforkdata$genre) & pitchforkdata$Review_Year == "2018"))
+#Create a vector containing the sum of all Rock reviews for each year
+Rock <- c(sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2002"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2003"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2004"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2005"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2006"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2007"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2008"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2009"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2010"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2011"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2012"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2013"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2014"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2015"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2016"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2017"),
+          sum(grepl('Rock', pitchforkdata$genre) & pitchforkdata$Review_Year == "2018"))
+#Convert this data into a new Data Frame
+Number_Of_Reviews <- data.frame(row.names = Review_Year, Rock, HipHop)
+#Present the first 5 rows of this new Data Set
+```
+
+```{r, echo = FALSE, results='asis'}
+
+kable(Number_Of_Reviews[1:5, ], caption = "Number of Hip-Hop/Rock reviews published each year")
+```
+
+### Plot 3 - Area Chart showing the evolution of <span style="color: red;">Pitchfork</span> Hip-Hop reviews
+
+```{r}
+#Plot an Area Chart showing the number of Hip-Hop reviews for each year
+ pg3 <- Number_Of_Reviews %>% 
+  ggplot(aes(x = Review_Year, y = HipHop, group = 3)) +
+  geom_area(fill = "blueviolet",
+#Make the graph slightly transparent            
+            alpha = 0.5,
+#Include a line to outline the graph
+            colour = 1,
+            lwd = 1,
+            linetype = 1) +
+  theme_minimal() +
+#Add labels to describe the graph  
+  labs(
+    x = "Year",
+    y = "Number of Reviews",
+    title = "Pitchfork Hip-Hop Reviews",
+    subtitle = "Number of Pitchfork Hip Hop Reviews each year",
+    caption = "Source:Kaggle.com") +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(face = "italic"),
+#Change the angle of the X Axis labels so they're easier to read        
+        axis.text.x = element_text(angle = 45, hjust = 1))
+#Save the graph
+ggsave(here("figures", "fig03_areachart-hiphop.png"))
+#Plot the graph below        
+print(pg3)
+```
+
+### Summary of Visualisation 3
+
+This **Area Chart** shows a dramatic increase in the number of **Hip-Hop** reviews <span style="color: red;">Pitchfork</span> have published since the beginning of the 21st Century. In their earlier years, just over 50 **Hip-Hop** reviews were being published, however coinciding with **Hip-Hop's** dramatic rise in popularity, <span style="color: red;">Pitchfork</span> now review close to 250 **Hip-Hop** albums a year, and this figure has been continuously increasing barring only a couple of exceptions. This demonstrates that as **Hip-Hop** has become a mainstream genre, the number of albums <span style="color: red;">Pitchfork</span> has reviewed from this genre has dramatically increased.
+
+***
+
+## Visualisation 4 - Hip-Hop Rise vs Rock Decline
+
+With **Visualisation 3** revealing a dramatic increase in the number of **Hip-Hop** reviews, I was eager to see what sort of impact - if any - this had on <span style="color: red;">Pitchfork's</span> tendency to review **Rock** albums. Using the same data set as **Visualisation 3**, I plotted a Line Graph with the aim of comparing the rise in **Hip-Hop** publications alongside those of **Rock** albums.
+
+### Plot 4 - Line Chart comparing the number of Hip-Hop/Rock reviews 
+
+```{r}
+
+pg4 <- Number_Of_Reviews %>% 
+  ggplot(mapping = aes(x = Review_Year)) +
+#Plot the Rock data on the y axis 
+  geom_line(mapping = aes(y = Rock, group = 1, colour = "Rock")) +
+  geom_point(mapping = aes(y = Rock, group = 1, colour = "Rock")) +
+#Plot the Hip-Hop data on the y axis  
+  geom_line(mapping = aes(y = HipHop, group = 3, colour = "HipHop")) +
+  geom_point(mapping = aes(y = HipHop, group = 3, colour = "HipHop")) +
+  theme_classic() +
+#Add labels to the graph  
+  labs(
+    x = "Review Year",
+    y = "Number of Reviews",
+    title = "Rock vs Hip Hop Number of Reviews",
+    subtitle = "Yearly comparison of Pitchfork Rock/Hip-Hop reviews",
+    caption = "Source:Kaggle.com") +
+#Change the colours of the Y axis variables   
+  scale_colour_manual(values = c("Rock"="#3F51B5", "HipHop"="#FFC107")) +
+#Change the position and name of the legend  
+  theme(legend.position = "bottom") +
+  labs(col = "Genre") +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(face = "italic"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+#Save the graph
+ggsave(here("figures", "fig04_linechart-rock-vs-hiphop.png"))
+#Plot the graph below
+print(pg4)
+```
+
+### Summary of Visualisation 4 
+
+This Line Graph directly plots a yearly comparison of the number of **Hip-Hop** & **Rock** reviews between **2002 - 2018**. While there was initially an astronomical contrast between the number of published reviews, since 2006 there has been a clear, gradual rise in the number of <span style="color: red;">Pitchfork's</span> **Hip-Hop** reviews. Coinciding with this, the graph illustrates a dramatic decrease in the number of **Rock** reviews between 2009-2018. Despite the number of **Rock** reviews still exceeding those of **Hip-Hop** by 2018, the development of this graph suggests as **Hip-Hop** continues to grow in popularity, <span style="color: red;">Pitchfork</span> are beginning to deviate from their primary roots as a **Rock** publisher.
+
+***
+
+## Project Summary
+
+The purpose of this study was to analyse data regarding <span style="color: red;">Pitchfork's</span> reviewing tendencies over the past **25 years**, while observing any biases the publisher held towards certain genres, in particular **Rock**. The boxplot in **Visualisation 1** appeared to reject these bias claims, with each of the main genres receiving a similar average score across 19 years of album reviews. Furthermore, the Lollipop Graph in **Visualisation 2** revealed a clear disparity between the number of perfect 10 scores awarded to **Rock** albums in comparison with all other genres, ultimately revealing that <span style="color: red;">Pitchfork</span> are unquestionably more prone to awarding **Rock** albums a perfect score.  
+
+The second aim of this project was to identify trends which possibly coincide with the rise of **Hip-Hop** to the mainstream over the past decade. The Area Graph in **Visualisation 3** did a good job of presenting the dramatic increase in <span style="color: red;">Pitchfork</span> **Hip-Hop** reviews since 2010, suggesting as **Hip-Hop** has grown in popularity, <span style="color: red;">Pitchfork</span> has been much more prone to reviewing. Finally, the Line Graph in **Visualisation 4** extending on the findings from **Visualisation 3**, revealing that the incraese in **Hip-Hop** reviews coincides with a significant decrease in **Rock** reviews, potentially suggesting **Hip-Hop** may be their most reviewed genre within the next few years.
+
+## Limitations & Future Directions
+
+While I do feel this project has successfully illustrated some of <span style="color: red;">Pitchfork's</span> trends when it comes to album reviews, I also recognise certain limitations within the study. Firstly, while **Visualisation 1** appears to reveal a similar average score across genres, these findings may have been swayed by the omission of subgenres. Though I wanted to keep the data simple, I recognise how many <span style="color: red;">Pitchfork</span> albums are classified as a 'subgenre', and therefore failing to include these may have had a significant impact on the data. Additionally, although the boxplot revealed the proportion of the reviews for each genre, I failed to take this into consideration when observing the number of 10s given across genres. Alternatively, I could have assessed the data in a way which calculated the percentage of each genre's reviews which had received a 10, thus providing a more insightful overview of potential biases across genres.  
+
+If I was to analyse this data again in the future, I would divert my attention to the Best New Music column. While I failed to address this during the current project, I feel as though comparing the amount of featured albums each genre has in the Best New Music column would provide an alternative approach to measuring potential bias across genres.  
+
+The full repo for this project is available here: https://github.com/meicalowen/PSY6422-Data-Visualisation
