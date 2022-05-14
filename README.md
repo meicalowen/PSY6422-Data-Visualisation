@@ -5,9 +5,10 @@ This project analysed trends regarding Pitchfork's album reviews between 1999 an
 
 The repo includes:
 
-figures - plots from the data visualisation
-images - images taken from google to include in the markdown
-raw_data - pitchfork raw data used for the visualisation project
-index.Rmd - full Rmarkdown file
-index.html - full Rmarkdown file knitted to html
+* figures - plots from the data visualisation
+* images - images taken from google to include in the markdown
+* raw_data - pitchfork raw data used for the visualisation project
+* index.Rmd - full Rmarkdown file
+* index.html - full Rmarkdown file knitted to html
+* 
 View the full repo: https://github.com/meicalowen/PSY6422-Data-Visualisation
